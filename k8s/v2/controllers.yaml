@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-controller-headless
+  labels:
+    app: kafka-controller
+spec:
+  ports:
+    - port: 9092
+      name: kafka-broker-port
+    - port: 9101
+      name: kafka-jmx-port
+  clusterIP: None
+  selector:
+    app: kafka-controller
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka-controller
+  namespace: kraft
+spec:
+  replicas: 3
+  serviceName: kafka-controller-headless
+  selector:
+    matchLabels:
+      app: kafka-controller
+  template:
+    metadata:
+      labels:
+        app: kafka-controller
+    spec:
+      containers:
+      - name: kafka-controller
+        image: confluentinc/cp-kafka:7.5.0
+        ports:
+        - containerPort: 9092
+        - containerPort: 9101
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        env:
+          - name: CLUSTER_ID
+            value: "MkU3OEVBNTcwNTJENDM2Qk"
+          - name: KAFKA_PROCESS_ROLES
+            value: "controller"
+          - name: KAFKA_JMX_PORT
+            value: "9101"
+          - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+            value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+          - name: KAFKA_INTER_BROKER_LISTENER_NAME
+            value: "PLAINTEXT"
+          - name: KAFKA_CONTROLLER_LISTENER_NAMES
+            value: "CONTROLLER"
+          - name: KAFKA_LOG_DIRS
+            value: "/tmp/kafka-logs"
+          - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+            value: "0@kafka-controller-0.kafka-controller-headless.kraft.svc.cluster.local:9092,1@kafka-controller-1.kafka-controller-headless.kraft.svc.cluster.local:9092,2@kafka-controller-2.kafka-controller-headless.kraft.svc.cluster.local:9092"
+        command:
+        - sh
+        - -exc
+        - |
+          export KAFKA_NODE_ID=${HOSTNAME##*-}
+          export KAFKA_LISTENERS="CONTROLLER://${HOSTNAME}.kafka-controller-headless.kraft.svc.cluster.local:9092"
+          exec /etc/confluent/docker/run
+        volumeMounts:
+          - name: controllers
+            mountPath: /tmp
+        resources: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: controllers
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      resources:
+        requests:
+          storage: 1G
+      storageClassName: "hostpath"

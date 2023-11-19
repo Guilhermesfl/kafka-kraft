@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-controller
+spec:
+  selector:
+    app: kafka-controller
+  ports:
+  - name: controller-1
+    port: 29092
+    protocol: TCP
+    targetPort: 29092
+  - name: controller-2
+    port: 29093
+    protocol: TCP
+    targetPort: 29093
+  - name: controller-3
+    port: 29094
+    protocol: TCP
+    targetPort: 29094
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: controller-1
+  labels:
+    app: kafka-controller
+spec:
+  containers:
+  - name: controller-1
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+    - containerPort: 29092
+    env:
+      - name: KAFKA_PROCESS_ROLES
+        value: "controller"
+      - name: KAFKA_NODE_ID
+        value: "1"
+      - name: KAFKA_LISTENERS
+        value: "CONTROLLER://controller-1:29092"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@kafka-controller:29092,2@kafka-controller:29093,3@kafka-controller:29094"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: "CONTROLLER"
+      - name: CLUSTER_ID
+        value: "MkU3OEVBNTcwNTJENDM2Qk"
+    resources: {}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: controller-2
+  labels:
+    app: kafka-controller
+spec:
+  containers:
+  - name: controller-2
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+    - containerPort: 29093
+    env:
+      - name: KAFKA_PROCESS_ROLES
+        value: "controller"
+      - name: KAFKA_NODE_ID
+        value: "2"
+      - name: KAFKA_LISTENERS
+        value: "CONTROLLER://controller-2:29093"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@kafka-controller:29092,2@kafka-controller:29093,3@kafka-controller:29094"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: "CONTROLLER"
+      - name: CLUSTER_ID
+        value: "MkU3OEVBNTcwNTJENDM2Qk"
+    resources: {}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: controller-3
+  labels:
+    app: kafka-controller
+spec:
+  hostname: controller-3
+  containers:
+  - name: controller-3
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+    - containerPort: 29094
+    env:
+      - name: KAFKA_PROCESS_ROLES
+        value: "controller"
+      - name: KAFKA_NODE_ID
+        value: "3"
+      - name: KAFKA_LISTENERS
+        value: "CONTROLLER://controller-3:29094"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@kafka-controller:29092,2@kafka-controller:29093,3@kafka-controller:29094"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: "CONTROLLER"
+      - name: CLUSTER_ID
+        value: "MkU3OEVBNTcwNTJENDM2Qk"
+    resources: {}

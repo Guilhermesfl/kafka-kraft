@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-broker-headless
+  labels:
+    app: kafka-broker
+spec:
+  ports:
+    - port: 9092
+      name: kafka-broker-port
+    - port: 9101
+      name: kafka-jmx-port
+  clusterIP: None
+  selector:
+    app: kafka-broker
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka-broker
+  namespace: kraft
+spec:
+  replicas: 3
+  serviceName: kafka-broker-headless
+  selector:
+    matchLabels:
+      app: kafka-broker
+  template:
+    metadata:
+      labels:
+        app: kafka-broker
+    spec:
+      containers:
+      - name: kafka-broker
+        image: confluentinc/cp-kafka:7.5.0
+        ports:
+        - containerPort: 9092
+        - containerPort: 9101
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        env:
+          - name: CLUSTER_ID
+            value: "MkU3OEVBNTcwNTJENDM2Qk"
+          - name: KAFKA_JMX_PORT
+            value: "9101"
+          - name: KAFKA_PROCESS_ROLES
+            value: "broker"
+          - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+            value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+          - name: KAFKA_INTER_BROKER_LISTENER_NAME
+            value: "PLAINTEXT"
+          - name: KAFKA_CONTROLLER_LISTENER_NAMES
+            value: "CONTROLLER"
+          - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+            value: "3"
+          - name: KAFKA_LOG_DIRS
+            value: "/tmp/kafka-logs"
+          - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+            value: "0@kafka-controller-0.kafka-controller-headless:9092,1@kafka-controller-1.kafka-controller-headless:9092,2@kafka-controller-2.kafka-controller-headless:9092"
+        command:
+        - sh
+        - -exc
+        - |
+          export KAFKA_NODE_ID=$((${HOSTNAME##*-}+30))
+          export KAFKA_LISTENERS="PLAINTEXT://${HOSTNAME}.kafka-broker-headless.kraft.svc.cluster.local:9092"
+          export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://${HOSTNAME}.kafka-broker-headless.kraft.svc.cluster.local:9092"
+          exec /etc/confluent/docker/run
+        volumeMounts:
+          - name: brokers
+            mountPath: /tmp
+        resources: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: brokers
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      resources:
+        requests:
+          storage: 1G
+      storageClassName: "hostpath"

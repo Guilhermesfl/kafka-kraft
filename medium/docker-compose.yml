@@ -1,0 +1,171 @@
+---
+version: "3"
+services:
+  controller-1:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles:
+      - controllers
+    hostname: controller-1
+    container_name: controller-1
+    environment:
+      KAFKA_PROCESS_ROLES: "controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENERS: "CONTROLLER://controller-1:29092"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      # Replace CLUSTER_ID with a unique base64 UUID using "bin/kafka-storage.sh random-uuid"
+      # See https://docs.confluent.io/kafka/operations-tools/kafka-tools.html#kafka-storage-sh
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  controller-2:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles:
+      - controllers
+    hostname: controller-2
+    container_name: controller-2
+    depends_on:
+      - controller-1
+    ports:
+      - "9093:9092"
+      - "9102:9101"
+    environment:
+      KAFKA_PROCESS_ROLES: "controller"
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: "CONTROLLER://controller-2:29092"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  controller-3:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles:
+      - controllers
+    hostname: controller-3
+    container_name: controller-3
+    depends_on:
+      - controller-1
+      - controller-2
+    ports:
+      - "9094:9092"
+      - "9103:9101"
+    environment:
+      KAFKA_PROCESS_ROLES: "controller"
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENERS: "CONTROLLER://controller-3:29092"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  broker-1:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles: ["brokers"]
+    hostname: broker-1
+    container_name: broker-1
+    ports:
+      - "9095:9092"
+      - "9104:9101"
+    environment:
+      KAFKA_NODE_ID: 4
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker-1:9092,PLAINTEXT_HOST://localhost:29092" # Required for brokers
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://broker-1:9092,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  broker-2:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles: ["brokers"]
+    hostname: broker-2
+    depends_on:
+      - broker-1
+    container_name: broker-2
+    ports:
+      - "9096:9092"
+      - "9105:9101"
+    environment:
+      KAFKA_NODE_ID: 5
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker-2:9092,PLAINTEXT_HOST://localhost:29092" # Required for brokers
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://broker-2:9092,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  broker-3:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles: ["brokers"]
+    hostname: broker-3
+    depends_on:
+      - broker-2
+    container_name: broker-3
+    ports:
+      - "9097:9092"
+      - "9106:9101"
+    environment:
+      KAFKA_NODE_ID: 6
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker-3:9092,PLAINTEXT_HOST://localhost:29092" # Required for brokers
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://broker-3:9092,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  broker-4:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles: ["brokers"]
+    hostname: broker-4
+    depends_on:
+      - broker-3
+    container_name: broker-4
+    ports:
+      - "9098:9092"
+      - "9107:9101"
+    environment:
+      KAFKA_NODE_ID: 7
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker-4:9092,PLAINTEXT_HOST://localhost:29092" # Required for brokers
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://broker-4:9092,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  broker-5:
+    image: confluentinc/cp-kafka:7.5.0
+    profiles: ["brokers"]
+    hostname: broker-5
+    depends_on:
+      - broker-3
+    container_name: broker-5
+    ports:
+      - "9099:9092"
+      - "9108:9101"
+    environment:
+      KAFKA_NODE_ID: 8
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker-5:9092,PLAINTEXT_HOST://localhost:29092" # Required for brokers
+      KAFKA_PROCESS_ROLES: "broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@controller-1:29092,2@controller-2:29092,3@controller-3:29092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://broker-5:9092,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    profiles: ["kafdrop"]
+    ports:
+      - "9999:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "broker-1:9092,broker-2:9092,broker-3:9092"

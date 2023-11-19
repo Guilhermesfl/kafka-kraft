@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: kafdrop
+  name: kafdrop
+spec:
+  containers:
+  - env:
+    - name: KAFKA_BROKERCONNECT
+      value: kafka-broker:9092
+    - name: SERVER_PORT
+      value: "9000"
+    ports:
+      - containerPort: 9000
+    image: obsidiandynamics/kafdrop:latest
+    name: kafdrop
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}

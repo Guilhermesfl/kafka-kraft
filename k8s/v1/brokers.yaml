@@ -1,0 +1,164 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broker-1
+  labels:
+    app: broker
+    broker: broker-1
+spec:
+  hostname: broker-1
+  containers:
+  - name: broker-1
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+    - containerPort: 9092
+    - containerPort: 29092
+    env:
+      - name: CLUSTER_ID
+        value: "MkU3OEVBNTcwNTJENDM2Qk"
+      - name: KAFKA_NODE_ID
+        value: "4"
+      - name: KAFKA_PROCESS_ROLES
+        value: "broker"
+      - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+        value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@kafka-controller:29092,2@kafka-controller:29093,3@kafka-controller:29094"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: "CONTROLLER"
+      - name: KAFKA_ADVERTISED_LISTENERS
+        value: "PLAINTEXT://broker-1.kraft.svc.cluster.local:9092"
+      - name: KAFKA_LISTENERS
+        value: "PLAINTEXT://broker-1:9092"
+      - name: KAFKA_INTER_BROKER_LISTENER_NAME
+        value: "PLAINTEXT"
+    resources: {}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broker-2
+  labels:
+    app: broker
+    broker: broker-2
+spec:
+  hostname: broker-2
+  containers:
+  - name: broker-2
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+    - containerPort: 9092
+    - containerPort: 29092
+    env:
+      - name: CLUSTER_ID
+        value: "MkU3OEVBNTcwNTJENDM2Qk"
+      - name: KAFKA_NODE_ID
+        value: "5"
+      - name: KAFKA_PROCESS_ROLES
+        value: "broker"
+      - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+        value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@kafka-controller:29092,2@kafka-controller:29093,3@kafka-controller:29094"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: "CONTROLLER"
+      - name: KAFKA_ADVERTISED_LISTENERS
+        value: "PLAINTEXT://broker-2.kraft.svc.cluster.local:9092"
+      - name: KAFKA_LISTENERS
+        value: "PLAINTEXT://broker-2:9092"
+      - name: KAFKA_INTER_BROKER_LISTENER_NAME
+        value: "PLAINTEXT"
+    resources: {}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broker-3
+  labels:
+    app: broker
+    broker: broker-3
+spec:
+  hostname: broker-3
+  containers:
+  - name: broker-3
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+    - containerPort: 9092
+    - containerPort: 29092
+    env:
+      - name: CLUSTER_ID
+        value: "MkU3OEVBNTcwNTJENDM2Qk"
+      - name: KAFKA_NODE_ID
+        value: "6"
+      - name: KAFKA_PROCESS_ROLES
+        value: "broker"
+      - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+        value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+        value: "1@kafka-controller:29092,2@kafka-controller:29093,3@kafka-controller:29094"
+      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+        value: "CONTROLLER"
+      - name: KAFKA_ADVERTISED_LISTENERS
+        value: "PLAINTEXT://broker-3.kraft.svc.cluster.local:9092"
+      - name: KAFKA_LISTENERS
+        value: "PLAINTEXT://broker-3:9092"
+      - name: KAFKA_INTER_BROKER_LISTENER_NAME
+        value: "PLAINTEXT"
+    resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-1
+spec:
+  selector:
+    broker: broker-1
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-2
+spec:
+  selector:
+    broker: broker-2
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-3
+spec:
+  selector:
+    broker: broker-3
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-broker
+spec:
+  clusterIP: None
+  selector:
+    app: broker
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  - name: kafka-external
+    port: 29092
+    protocol: TCP
+    targetPort: 9092
